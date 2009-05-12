@@ -1,3 +1,4 @@
+/* ex: set tabstop=2 expandtab softtabstop=2 shiftwidth=2:  */
 /* SAE_ENC $(DATE)
  * user interface for various compression algorithms
  * @author esa karjalainen
@@ -40,12 +41,19 @@ int main(int argc, char *argv[]){
     
     /* Read data to buffer, compress, */
     switch((int)*argv[1]){
+      int i; 
     case 'c':
       compress(infile, outfile);
       break;
     case 'x':
       extract(infile, outfile);
       break;
+    default:
+      printf("DEBUG:");
+      for (i =0;i<argc;i++) {
+        printf("%d:%s ", i, argv[i]);
+      
+      }
     }
     
     fclose(infile);
@@ -66,6 +74,9 @@ void compress(FILE *infile, FILE* outfile){
   compress_rle_ec(infile, outfile);
 }
 
+/* At least here we can call a diff'rent extractor based on filetype...
+ *
+ */
 void extract(FILE *infile, FILE* outfile){
   extract_rle_ec(infile, outfile);
 }

@@ -1,7 +1,8 @@
 # compiler options
 CC=gcc
 CFLAGS=
-TARGET_DIR=./bin
+# TARGET_DIR=./bin
+TARGET_DIR=bin
 SHELL = sh
 
 # source files

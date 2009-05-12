@@ -1,31 +1,22 @@
 /* ex: set tabstop=2 expandtab softtabstop=2 shiftwidth=2:  */
 #include <string.h>
-//#include "../compress.h"
 #include "rle.h"
 /*tests:*/
-void test1();
-void test2();
-void test3();
-void test4();
-void ectest1();
-void ectest2();
-void ectest3();
-void ectest4();
 
 static int debugflag=0;
 char debug_buffer[2000]="";
 
-void debug_print(const char * src) {
-  if(debugflag) {
-    printf(src);
+int test(int status){
+  if(status){
+    printf("\t[OK]\n");
+  } else {
+    printf("\t[FAIL]: status %d\n", status);
   }
 }
 
-int test(int status){
-  if(status){
-    printf("\t[OK]\n", status);
-  } else {
-    printf("\t[FAIL]: status %d\n", status);
+void debug_print(const char * src) {
+  if(debugflag) {
+    printf(src);
   }
 }
 
@@ -170,7 +161,6 @@ void ectest3(){
 void ectest1(){
   unsigned char testbuffer[256]="";
   unsigned char teststring[33] = "aaaaabbbbbbcccccccdddddddeeeeeee";
-  unsigned char compressedstring[33] = "";
   int testbuffer_lenght;
   int compressed_lenght;
   sprintf(debug_buffer, "compressing %d bytes\n", sizeof(teststring));
@@ -181,11 +171,16 @@ void ectest1(){
   debug_print(debug_buffer);
   compressed_lenght=testbuffer_lenght;
 
-  strncpy(compressedstring, testbuffer, testbuffer_lenght);
+  memset(teststring, 0, sizeof(teststring));
+  strncpy(teststring, testbuffer, testbuffer_lenght);
 
-  testbuffer_lenght=rle_decode_ec(testbuffer, compressedstring, compressed_lenght);
-  sprintf(debug_buffer, "%s decompressed to\n%s, lenght:%d\n", compressedstring, testbuffer, 
+  testbuffer_lenght=rle_decode_ec(testbuffer, teststring, compressed_lenght);
+  sprintf(debug_buffer, "%s decompressed to\n%s, lenght:%d\n", teststring, testbuffer, 
 	 testbuffer_lenght);  
   debug_print(debug_buffer);
-  test(0==strcmp(teststring, testbuffer));
+  if(!strcmp(teststring, testbuffer)){
+    printf("\tfailed\n");
+  } else {
+    printf("\tOK\n");
+  }
 }
