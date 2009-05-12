@@ -1,3 +1,5 @@
+/* ex: set tabstop=2 expandtab softtabstop=2 shiftwidth=2:  */
+
 #include "dictionary.h"
 #include <malloc.h>
 #include <string.h>
@@ -50,7 +52,7 @@ const char * get_word(int index){
   return 0;
 }
 
-int find_in_dict(const char * word){
+keyword * find_in_dict(const char * word){
   keyword * current = head;
   int i = 1;
   if (!head->word) {
@@ -61,7 +63,7 @@ int find_in_dict(const char * word){
 //    printf("has dictionary: ");
 		if (0==strcmp(current->word, word)) { /* strcmp returns difference between szStrings*/
 //      printf("found word\n");
-			return i; /* just in case, return 1-based index of location */
+			return current; /* just in case, return 1-based index of location */
 		}
 //    printf("no word\n");
     if(0!=current->next) {
@@ -88,6 +90,7 @@ void insert_keyword(keyword * current, const char * word, const int len) {
   current->word=malloc(len+1*sizeof(char)); /* malloc word size + 0 slace */
   memcpy(current->word, word, len);
   current->length=len;
+  printf(">");
   current->count = 1;
   current->next = new_keyword();     
   /* sete the word, now get a new word  */
@@ -105,37 +108,47 @@ int scan_words(const char * src, const int len){
   head = malloc(sizeof(keyword)); /* alloc single keyword */
   head->next = 0;
   keyword * current = head;
-  
+	keyword * dict_word = 0;
+
   for(i=0;i<len;i++){
     word[w_loc]=src[i]; 
     word[(w_loc+1)]='\0'; /* must null-terminate string */
-    if(!find_in_dict(word)){/* only do this if the word doesn't already exist */
-      printf(">");
-      insert_keyword(current, word, w_loc+1);
-      current = current->next;
-    } else {
-      printf("#");
-    }
-    w_loc++;
-    if(w_loc==MAX_WORD_LEN){
-      w_loc=0;
-      //strcpy (word, "");
-    }
+//    if (w_loc>1) {
+      dict_word = find_in_dict(word);
+      if(!dict_word){/* only do this if the word doesn't already exist */
+        insert_keyword(current, word, w_loc+1);
+        current = current->next;
+      } else {
+        dict_word->count++;
+        printf("#word: %s, count: %d\n", dict_word->word, dict_word->count);
+      }
+      w_loc++;
+      if(w_loc==MAX_WORD_LEN){
+        w_loc=0;
+        //strcpy (word, "");
+      }
+//    } else {
+//      w_loc++;
+//    }
   }
   return 0;
 }
 
+/** not needed anymore --- oh yes it is´. bah. */ 
 int count_words(const char * src, const int len){
   keyword * current = head;
   int i = 0;
   char * word = 0;
   printf("counting words. \n Sauce: %s\nLength: %d\n", src, len);
   while(0!=current->next) {
+    current->count = 0;
 //    printf("comparing [%s(%d)]", current->word, current->length);
     for (i=0; i!=len; i++) {
       word = malloc((current->length)*sizeof(char));
-      memcpy(word, (src+i), current->length);
-      word[current->length] = '\0';
+      strncpy(word, (src+i), current->length);
+      //memcpy(word, (src+i), current->length);
+      //word[current->length] = '\0';
+      //strcpy(word, current->word);
 //      printf("[%s : %s = %d ]", word, current->word, strncmp(word, current->word, current->length));
       if(0 == strncmp(word, current->word, current->length)){
 //	printf("++");
@@ -146,8 +159,8 @@ int count_words(const char * src, const int len){
     current = current->next;  
   }
   return 0;
-
 }
+
 
 void swap(keyword * current, keyword *next){
   char swp[MAX_WORD_LEN];
@@ -173,23 +186,27 @@ void swap(keyword * current, keyword *next){
 }
 
 void slow_sort(){
+  /* Sort condition: Longest repeatable block
+   *
+   * */
   keyword * current = head;
   keyword * next = 0;
+  int swaps = 0;
   int w_c, w_n;
   while(current->next) {
     next = current->next;
-    w_c = ((current->count+1) * current->length);
-    w_n = ((next->count+1) * next->length);
+    w_c = ((MAX_WORD_LEN * current->count) * current->length);
+    w_n = ((MAX_WORD_LEN * next->count) * next->length);
     if((w_c) < (w_n)) {
       swap(current, next);
-      printf("-");
+      swaps++;
       current = head;
       //current = current->next;
     } else { 
       current = current->next;
     }
   } 
-  printf("slow_sort is done\n");
+  printf("slow_sort is done. Swapped %d words\n", swaps);
 }
 
 /**
@@ -211,17 +228,10 @@ int encode_dict(char * dest, char * src, int len)
 //  printf("len: %d\n", len);
   scan_words(src, len);
 //  printf("len: %d\n", len);
-  /* TODO: now we have a linked list of potential words; next step is to
-   * prune out duplicates. I guess we could do that at dict-build time,
-   * too.
-   */
-
-  /*	Steps:
-   *	-  Go through our sourcestring, count instances of words
-   *	-  Calculate weight for each keyword: count * length, weight
-   *	count by, say, two.
-   */
   count_words(src, len);
+  /* now we have a linked list of potential words;
+	 * we also counted the times they appear in the source.
+   */
   slow_sort();
   /*
    *  - start removing the highest-valued keys from string, split
@@ -233,23 +243,35 @@ int encode_dict(char * dest, char * src, int len)
   /* wait, if we just parse from top, find the first match, replace and
    * move source pointer? naw, won't work... I know, we'll use a
    * map. */
+	/* TODO: Define test blob struct, use it.
+	 *
+	 * */
+
   current = head;
   memset(map, '-', len*sizeof(char));
   while(current->next){
 		int running = 1;
 //    printf("start map jump\n");
-    while((1==running) && (0==memcmp( "+", map+i, sizeof(char) ))){
-	      i++;
-				if(i>=len){
-					running=0;
-				}
-    }
-		if (i>0) {
-	    //printf("map jump done: %d characters\n", i);
+		while((1==running) && (0==memcmp( "+", map+i, sizeof(char) ))){
+			i++;
+			if(i>=len){
+        running=0;
+			}
+      printf("!");
 		}
+		if (i>0) {
+			//printf("map jump done: %d characters\n", i);
+		}
+#ifdef TEST
+    if(current->length == 0){
+      printf("Error!\n");
+      return -1;
+    }
+#endif //TEST
+
     if(0==strncmp(src+i, current->word, current->length)){
 			//char conv[9];
-      memset(src+i, (char)i, current->length); /*clear from source*/
+      memset(src+i, '-', current->length); /*clear from source*/
       //memset(src+i, '#', 1); /*tag*/
 			//sprintf(conv, "#%x", i+1);
       //memset(src+i, conv, strlen(conv)-1); /*tag*/
@@ -257,7 +279,7 @@ int encode_dict(char * dest, char * src, int len)
      
       memset(map+i, '+', current->length); /*mark area in map*/
       i += current->length; /*jump ahead*/
-      printf("removed keyword %s from src\n", current->word);
+      printf("removed keyword (%s) from src\n", current->word);
 			printf("map: %s\n", map);
       printf("src: %s\n", src);
       keywords_removed++;
@@ -266,15 +288,14 @@ int encode_dict(char * dest, char * src, int len)
     }
     if(i>=len){ /*if through string with a keyword, get next. */
       i=0;
-      if (0==keywords_removed){
-        current->count = 0; /* for pruning list for saving */
-      }
+      current->count = keywords_removed; /* for pruning list for saving */
       keywords_removed =0;
       current = current->next;
     }
   }
 //	memset(src+len, '\0', sizeof(char));
   printf("encoded, dirty\n");
+  slow_sort();
   printf("src: %s\n", src);
   /* clear out all '\0's */
   for(i=0;i<len;i++){
@@ -318,6 +339,8 @@ int test_encode_dict(void){
   char src[]="talo talon talona taloa taloksi talossa talosta taloon talolla talolta talolle talotta taloineen taloin";
   char * dest = malloc(1000*sizeof(char));
   char * formatted = malloc(MAX_WORD_LEN+2*sizeof(char));
+//  memset(formatted, " ", MAX_WORD_LEN);
+//  memset(formatted+13, "\0", MAX_WORD_LEN -13);
   strcpy(formatted, "           ");
 
 
@@ -328,10 +351,18 @@ int test_encode_dict(void){
   if (current == 0) return 0;
   keyword * tmp = 0;
   while (current->next!=0){
-    memcpy(formatted, current->word, current->length);
-//    printf("word: "); printf(formatted); 
-//    printf(" | length: %d\t | count: %d\t TEST_weight: %d\n", current->length, current->count, (current->length*current->count));
-    strcpy(formatted, "           "); 
+    int cpy_len = 0;
+    if (current->length<11) {
+      cpy_len = current->length;
+    } else {
+      cpy_len = 11;
+    }
+    memcpy(formatted, current->word, cpy_len);
+    printf("word: "); printf(formatted); 
+    printf(" | length: %d\t | count: %d\t TEST_weight: %d\n", current->length, current->count, (current->length*current->count));
+//    memset(formatted, " ", MAX_WORD_LEN);
+//    memset(formatted+13, "\0", MAX_WORD_LEN-13);
+    strcpy(formatted, "           ");
     free(current->word);
     tmp = current;
     current = current->next;
@@ -343,6 +374,7 @@ int test_encode_dict(void){
   return 0;
 }
 
+/** for testing purposes only */
 int test_decode_dict(const char * src){
   char * dest = malloc(1000*sizeof(char));
   char * word =0;
@@ -350,6 +382,7 @@ int test_decode_dict(const char * src){
   int index = 0;
   int j=0;
   int key = 0;
+  /* stoopid ! */
   while(!memcmp("\0", src+i, sizeof(char))){
     if (memcmp("#", src+i, sizeof(char))){
       index = (int)*(src+i+1);

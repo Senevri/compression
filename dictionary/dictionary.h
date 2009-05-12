@@ -2,7 +2,7 @@
 #define DICTIONARY_H
 #include <stdio.h>
 
-#define MAX_WORD_LEN 10
+#define MAX_WORD_LEN 20
 
 /* Consistent array of two bits */
 int dict_encode(char * dest, char * src, int len);
