@@ -13,6 +13,7 @@ void ectest3();
 void ectest4();
 
 static int debugflag=0;
+static int alltests=0;
 char debug_buffer[2000]="";
 
 void debug_print(const char * src) {
@@ -76,6 +77,11 @@ void test4(){
   c_l=t_l;
   t_l=rle_decode(buf2, buf, c_l);
   printf("string was: %s\ndecoded to: %s\n", str, buf2);
+  if(0==strcmp(str, buf2)) {
+    printf("Status: OK\n");
+  } else {
+    printf("Status: FAILURE!!\n");
+  }
 }
 
 
@@ -89,6 +95,11 @@ void test2(){
   c_l=t_l;
   t_l=rle_decode(buf2, buf, c_l);
   printf("string was: %s\ndecoded to: %s\n", str, buf2);
+    if(0==strcmp(str, buf2)) {
+    printf("Status: OK\n");
+  } else {
+    printf("Status: FAILURE!!\n");
+  }
 
 }
 
@@ -102,11 +113,17 @@ void test3(){
   c_l=t_l;
   t_l=rle_decode(buf2, buf, c_l);
   printf("string was: %s\ndecoded to: %s\n", str, buf2);
+    if(0==strcmp(str, buf2)) {
+    printf("Status: OK\n");
+  } else {
+    printf("Status: FAILURE!!\n");
+  }
 
 }
 
 void test1(){
   unsigned char testbuffer[256]="";
+  unsigned char testbuffer2[256]="";
   unsigned char teststring[33] = "aaaaabbbbbbcccccccdddddddeeeeeee";
   int testbuffer_lenght;
   int compressed_lenght;
@@ -116,12 +133,12 @@ void test1(){
 	 testbuffer_lenght);
   compressed_lenght=testbuffer_lenght;
 
-  memset(teststring, 0, sizeof(teststring));
-  strncpy(teststring, testbuffer, testbuffer_lenght);
+  strncpy(testbuffer2, testbuffer, testbuffer_lenght);
 
-  testbuffer_lenght=rle_decode(testbuffer, teststring, compressed_lenght);
-  printf("%s decompressed to\n%s, lenght:%d\n", teststring, testbuffer, 
+  testbuffer_lenght=rle_decode(testbuffer, testbuffer2, compressed_lenght);
+  printf("%s decompressed to\n%s, lenght:%d\n", testbuffer2, testbuffer, 
 	 testbuffer_lenght);  
+    test(0==strcmp(teststring, testbuffer));
 }
 
 void ectest4(){
@@ -137,7 +154,7 @@ void ectest4(){
   c_l=t_l;
   t_l=rle_decode_ec(buf2, buf, c_l);
   printf("string was: %s\ndecoded to: %s\n", str, buf2);
-
+  test(0==strcmp(str, buf2));
 }
 
 
@@ -151,6 +168,7 @@ void ectest2(){
   c_l=t_l;
   t_l=rle_decode_ec(buf2, buf, c_l);
   printf("string was: %s\ndecoded to: %s\n", str, buf2);
+  test(0==strcmp(str, buf2));
 
 }
 
@@ -164,6 +182,7 @@ void ectest3(){
   c_l=t_l;
   t_l=rle_decode_ec(buf2, buf, c_l);
   printf("string was: %s\ndecoded to: %s\n", str, buf2);
+  test(0==strcmp(str, buf2));
 
 }
 

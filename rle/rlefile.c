@@ -8,23 +8,14 @@
 //void printBuffer(char *buf, int len);
 
 void compress_rle_ec(FILE *infile, FILE* outfile){
-    char *buffer = (char*)malloc(1024);
-    char *encbuffer = (char*)malloc(10240); 
+    char *buffer = malloc(1024*sizeof(char));
+    char *encbuffer = malloc(10240*sizeof(char)); 
     int len, loc, i, changed=0;
     char singlechar=0;
+    size_t read_len;
 
-    while(singlechar != EOF){
-      len=changed; /* remeber to initialize vars! */
-
-      while(len<1024){
-	singlechar = fgetc(infile);
-	if(singlechar==EOF){
-	  len++;
-	  break;
-	}
-	buffer[len]=singlechar;
-	len++;
-      }
+    while(!feof(infile)){
+      read_len = fread(buffer, sizeof(char), 1024, infile);
       /* encode rules:
 	 if last two characters are the same, all is OK.
 	 else, we do not know if the follow-up character
@@ -36,7 +27,7 @@ void compress_rle_ec(FILE *infile, FILE* outfile){
 	 do the thingy with the thingy.
       */
 
-      if(buffer[len-2]==buffer[len-1]){
+      if(buffer[read_len-2]==buffer[read_len-1]){
 	//printBuffer(buffer, len-1);
 	changed=0;
 	goto encode;
@@ -45,20 +36,11 @@ void compress_rle_ec(FILE *infile, FILE* outfile){
 	}
       /* encode */
     encode:
-      loc = rle_encode_ec(encbuffer, buffer, len-changed);
+      loc = rle_encode_ec(encbuffer, buffer, read_len-changed);
 
-      for(i=0;i<loc;i++){
-	fputc(encbuffer[i], outfile);
-      }
+      fwrite(encbuffer, sizeof(char), loc, outfile);
       
-/*
- * 	fwrite() is all fun and games 'til you realize it overwrites,
- * 	doesn't append...
-	may be an issue with passed pointer, though
-
-
-      fwrite(encbuffer, 1, sizeof(encbuffer), outfile);
-*/      buffer[0]=buffer[len-changed];
+      buffer[0]=buffer[read_len-changed];
     }
     free(buffer);
     free(encbuffer);
@@ -70,25 +52,18 @@ void extract_rle_ec(FILE *infile, FILE* outfile){
   int changed=0;
   char *buffer = (char*)malloc(1024);
   char *encbuffer = (char*)malloc(10240); 
+  size_t read_len;
 
-  while(singlechar != EOF){
+  while(!feof(infile)){
     len=changed;
-    while(len<1024){
-      singlechar = fgetc(infile);
-      if(singlechar==EOF) {
-	len++;
-	break;
-      }
-      buffer[len]=singlechar;
-      len++;
-    }
-    
+    fseek(infile, -changed, SEEK_CUR);
+    read_len = fread(buffer, sizeof(char), 1024, infile);
     /* make sure we're not splitting an 'lln' case apart. */
     
     /* First of all, if the last three characters in the buffer 
        are 'lln', everything's kosher.
     */
-    if(buffer[len-2]==buffer[len-3]) {
+    if(buffer[read_len-2]==buffer[read_len-3]) {
       changed=0;
       goto decode;
     } 
@@ -98,7 +73,7 @@ void extract_rle_ec(FILE *infile, FILE* outfile){
       those two to the beginning of buffer after write,
       and start inserting subsequent reads after those 2 bytes. 
     */
-      if(buffer[len-1]==buffer[len-2]){
+      if(buffer[read_len-1]==buffer[read_len-2]){
       changed=2;
       goto decode;
       }
@@ -112,15 +87,13 @@ void extract_rle_ec(FILE *infile, FILE* outfile){
     
     /* Decode needs a non-zerobased number-of-bytes as a parameter */
   decode:
-    loc = rle_decode_ec(encbuffer, buffer, len-changed);
+    loc = rle_decode_ec(encbuffer, buffer, read_len-changed);
     //if (changed==2) printBuffer(buffer, len-1);
     for(i=0;i!=changed;i++){
-      buffer[i]=buffer[(len+i)-changed];
+      buffer[i]=buffer[(read_len+i)-changed];
     }
+    fwrite(encbuffer, sizeof(char), loc, outfile);
 
-    for(i=0;i<loc;i++){
-      fputc(encbuffer[i], outfile);
-    } 
   }
   free(buffer);
   free(encbuffer);
