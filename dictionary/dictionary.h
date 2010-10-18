@@ -17,6 +17,7 @@ typedef struct {
   int count; /* count of how many instances of this word was found */
   int length; /* lenght of word */
   char * word;  /* word data */
+  void * prev; /* pointer to the previous keyword */
   void * next; /* pointer to the next keyword */
 } keyword;
 
