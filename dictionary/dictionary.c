@@ -33,8 +33,8 @@ int main(void)
 {
   printf("Testing Dictionary\n");
   //test_swap();
-  //test_encode_dict();
-  test_scan_words();
+  test_encode_dict();
+  //test_scan_words();
   //test_keywords();
   return 0;
 }
@@ -91,7 +91,7 @@ keyword * new_keyword(keyword * current){
 }
 
 void insert_keyword(keyword * current, const char * word, const int len) {
-  current->word=malloc(len+1*sizeof(char)); /* malloc word size + 0 slace */
+  current->word=malloc(MAX_WORD_LEN+1*sizeof(char)); /* malloc word size + 0 slace */
   memcpy(current->word, word, len);
   memcpy(current->word+len, "\0", 1); /*null-terminate*/
   //strncpy(current->word, word, len);
@@ -111,8 +111,6 @@ int scan_words(const char * src, const int len){
     Every character might be a keyword. scan input, keep on adding characters
     to the dictionary. As you progress, prune instaces which do not appear outside longer keywords.
    */
-  //head = malloc(sizeof(keyword)); /* alloc single keyword */
-  //head->next = 0;
   head = new_keyword(0);
   keyword * current = head;
 	keyword * dict_word = 0;
@@ -131,8 +129,9 @@ int scan_words(const char * src, const int len){
         }
       //}
       w_loc++;
-      if(w_loc==MAX_WORD_LEN ||w_loc>(len-i)){
+      if(w_loc==MAX_WORD_LEN ||w_loc>(1+len-i)){
         w_loc=0;
+        j--;
       }
     }
   }
@@ -160,30 +159,39 @@ keyword * remove_keyword(keyword * current){
 }
 
 
-/** not needed anymore --- oh yes it is. bah. */ 
+/** count instances of keywords in strings - do not allow overlap */ 
 int count_words(const char * src, const int len){
   keyword * current = head;
   int i = 0;
   char * word = 0;
   printf("counting words. \n Sauce: %s\nLength: %d\n", src, len);
   while(current) { /* will this miss the last word? */
+    if (current->length==0) {
+      if(current->next) current=current->next;
+    } 
     current->count = 0;
 //    printf("comparing [%s(%d)]", current->word, current->length);
-    for (i=0; i!=(len-current->length); i++) {
+    for (i=0; i<=(len-current->length); i++) {
       word = malloc((1+current->length)*sizeof(char));
       strncpy(word, (src+i), current->length);
       memset(word+current->length, '\0', sizeof(char));
       //printf("[%s : %s = %d ]\n", word, current->word, strncmp(word, current->word, current->length));
       if(0 == strncmp(word, current->word, current->length)){
-      	current->count++;
+      	/* found a match for a keyword */
+        current->count++;
+        if (current->length) i += (current->length-1);
       }
+      /*if ((0==strncmp(current->word, " ", current->length)) 
+          && (0==strncmp(word," ", current->length))) {
+        printf("%s|%s-%d,%d/",current->word, word, current->length, current->count);
+      }*/
       free(word); 
     }
     current = current->next;  
   }
-  /*remove unused keywords*/
+  /*remov unused keywords*/
   current = head;
-  while(current->next) {
+  while(current) {
     if(current->count==0 || current->length==0) {
       current = remove_keyword(current);
     } else {
@@ -193,23 +201,75 @@ int count_words(const char * src, const int len){
 
   return 0;
 }
-
-
+/*adjacent ordered swap*/
+ 
 void swap(keyword * current, keyword *next){
-  if (!current || !next || next->length==0) return;
+  //int flag=0;
   keyword * prev = current->prev;
-  if (prev){
+   if (prev){
     prev->next = next;
+    next->prev = prev;
   } else {
     head = next;
+    next->prev = 0;
   }
-  next->prev = prev;
   current->prev = next;
   current->next = next->next;
   next->next = current;
 }
 
-void slow_sort(){
+/*adjacent ordered data swap*/
+ 
+void swap_d(keyword * current, keyword *next){
+  /*data to swap: count, length, word*/
+  int tmplen, tmpc;
+  char word[MAX_WORD_LEN+1];
+  tmplen = current->length;
+  tmpc   = current->count;
+  strncpy(word, current->word, tmplen);
+  //tmp = current
+  current->count=next->count;
+  current->length=next->length;
+  strncpy(current->word, next->word, next->length);
+  memset(current->word+current->length, '\0', sizeof(char));
+  next->count=tmpc;
+  next->length=tmplen;
+  strncpy(next->word, word, tmplen);
+  memset(next->word+next->length, '\0', sizeof(char));
+
+  /*all done hopefully*/
+}
+
+
+
+/*universal swap*/
+void swap_u(keyword * a, keyword *b){
+  //int flag=0;
+  keyword * temp = new_keyword(0);
+  if(0==a||0==b) return;
+  temp->prev = a->prev;
+  temp->next = a->next;
+  //printf("+");
+  if (b==a->next) {
+    a->next = b->next;
+    a->prev = b;
+    b->next = temp->next;
+    b->prev = temp->prev;
+  } else if (a==b->next){
+    a->prev = b->prev;
+    a->next = b;
+    b->next = temp->next;
+    b->prev = a;
+  } else {
+    a->prev = b->prev;
+    a->next = b->next;
+    b->prev = temp->prev;
+    b->next = temp->next;
+  }
+  free(temp);
+}
+
+int slow_sort(){
   /* Sort condition: Longest repeatable block
    * 
    * ASSUMPTION : longest code rep = x. Thus, compression ratio = (x/word->length)
@@ -218,35 +278,44 @@ void slow_sort(){
   keyword * current = head;
   keyword * next = current->next;
   int swaps = 0;
-  int w_c, w_n;
-//  if(current->length==0){
-//    current=remove_keyword(current);
-//  }
+  int w_c =0; int w_n=0;
   while(current) {
-    //next = current->next;
-    if(next && next->length>0) {
-      w_c = ((MAX_WORD_LEN * (current->count-1)) * current->length);
-      w_n = ((MAX_WORD_LEN * (next->count-1)) * next->length);
-      //if (w_c<0) w_c=current->length;
-      //if (w_n<0) w_n=next->length;
-      //w_c = current->count-1;
-      //w_n = next->count-1;
-      //w_c = ((MAX_WORD_LEN * current->count) * current->length);
-      //w_n = ((MAX_WORD_LEN * next->count) * next->length);
-      if((w_c) < (w_n)) {
-        swap(current, next); /*current->next may be null*/
+    next = current->next;
+    if(next) {
+      if (current->count>1 ) { 
+        w_c = current->count*current->length; 
+      } else {
+        w_c = 1; //(4*current->length/MAX_WORD_LEN);
+      }
+      if (next->count>1) { 
+        w_n = next->count*next->length;
+      } else {
+        w_n = 1; //(4*next->length/MAX_WORD_LEN);
+      }
+      if(w_c == w_n){
+        w_c = current->length;
+        w_n = next->length;
+      }
+      /* if current weight is less than next weight swap */
+      if(w_c < w_n) {
+        swap_d(current, next); /*current->next may be null*/
+        //printf("post:[%s<>%s]\n", current->word, next->word);
+        //printf("nn%d|c%d|nnn%d|nn%d|c%d\n",current->prev, current, current->next, next, next->next);
         swaps++;
         current = head;
         //current = current->next;
       } else { 
         current = current->next;
       }
-      next = current->next;
+      //printf("%d\n", current);
+      //next = current->next;
     } else {
       current = 0;
     }
+    //next = current->next;
   } 
   printf("slow_sort is done. Swapped %d words\n", swaps);
+  return 0;
 }
 
 /**
@@ -263,7 +332,7 @@ int encode_dict(char * dest, char * src, int len)
   keyword * current = head;
   char * map = malloc(1+len*sizeof(char));
   int i = 0;
-  int j = 0;
+//  int j = 0;
   int keywords_removed = 0;
 //  printf("len: %d\n", len);
   scan_words(src, len);
@@ -298,7 +367,7 @@ int encode_dict(char * dest, char * src, int len)
       if(i>=len){
         running=0;
       }
-      //printf("!");
+      printf("!");
     }
     if (i>0) {
       //printf("map jump done: %d characters\n", i);
@@ -382,10 +451,11 @@ void dump_dict(void){
   //strcpy(formatted, "                    ");
   memset(formatted, ' ', FORMATTED_LEN);
   memset(formatted+FORMATTED_LEN, '\0', sizeof(char));
+
   keyword * current = head;
   if (current == 0) return;
   printf("\n");
-  while (current->next){
+  while (current){
     int cpy_len = 0;
     if (current->length<FORMATTED_LEN) {
       cpy_len = current->length;
@@ -398,7 +468,11 @@ void dump_dict(void){
     printf(" | length: %d\t | count: %d\t TEST_weight: %d\n",  current->length, current->count, (current->length*current->count));
     memset(formatted, ' ', FORMATTED_LEN);
     memset(formatted+FORMATTED_LEN, '\0', sizeof(char));
+    if(current->next == 0 && (i+1)<dict_size){
+      printf("\nERROR:%d|%d|%d|%s\n", current->prev, current, current->next, current->word);
+    }
     current = current->next;
+
   }
   printf("\ndictionary size: %d", dict_size);
 }
@@ -458,11 +532,15 @@ int test_swap(void){
 }
 
 int test_scan_words(void){
-  char src[]="talo talon talona taloa taloksi talossa talosta taloon talolla talolta talolle talotta taloineen taloin";
+  char src[]="talo talon talona taloa taloksi talossa talosta taloon talolla talolta talolle talotta taloineen taloin"; 
+  //char src[]="talo talon talona taloa taloksi talossa talosta"; // taloon talolla talolta talolle talotta taloineen taloin"; 
+  //char src[]="talo talon taloin";
+  //char src[]="talo talo talo";
   scan_words(src, sizeof(src));
   count_words(src, sizeof(src));
-  printf("\nwords counted\n");
+  printf("\nwords counted.\n");
   slow_sort();
+  printf("sorted\n");
   dump_dict();
   return 0;
 }

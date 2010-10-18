@@ -2,7 +2,7 @@
 #define DICTIONARY_H
 #include <stdio.h>
 
-#define MAX_WORD_LEN 200
+#define MAX_WORD_LEN 64
 
 /* Consistent array of two bits */ // I think this refers to rle 
 int dict_encode(char * dest, char * src, int len);
