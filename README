@@ -1,0 +1,9 @@
+My "do it yourself" C compression project. 
+Educational.
+
+CURRENT ISSUES:
+- something glitchy about RLE - OS specific.
+- Dictionary: dictionary.c's 'swap' function, or rather slow_sort, 
+  seems to be losing quite a few dictionary entries. probable cause 
+  is setting keyword list node's 'next' to 0, when it shouldn't.
+
