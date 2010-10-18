@@ -206,6 +206,7 @@ int count_words(const char * src, const int len){
 void swap(keyword * current, keyword *next){
   //int flag=0;
   keyword * prev = current->prev;
+  keyword * nextnext = next->next;
    if (prev){
     prev->next = next;
     next->prev = prev;
@@ -216,6 +217,7 @@ void swap(keyword * current, keyword *next){
   current->prev = next;
   current->next = next->next;
   next->next = current;
+  nextnext->prev = current;
 }
 
 /*adjacent ordered data swap*/
@@ -298,7 +300,7 @@ int slow_sort(){
       }
       /* if current weight is less than next weight swap */
       if(w_c < w_n) {
-        swap_d(current, next); /*current->next may be null*/
+        swap(current, next); /*current->next may be null*/
         //printf("post:[%s<>%s]\n", current->word, next->word);
         //printf("nn%d|c%d|nnn%d|nn%d|c%d\n",current->prev, current, current->next, next, next->next);
         swaps++;

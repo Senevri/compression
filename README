@@ -1,9 +1,16 @@
 My "do it yourself" C compression project. 
 Educational.
 
+FIXED ISSUES: dictionary swap works, now generates a sorted dictionary.
+
 CURRENT ISSUES:
 - something glitchy about RLE - OS specific.
-- Dictionary: dictionary.c's 'swap' function, or rather slow_sort, 
-  seems to be losing quite a few dictionary entries. probable cause 
-  is setting keyword list node's 'next' to 0, when it shouldn't.
+- Dictionary: slow_sort is slow, 
+ 
+TODO: Dictionary remove heaviest keywords from source, split remaining to
+  text blobs, go through right branch 'til there's no more heaviest, get 
+  to next etc. Generate huffman codes based on results (removing the 
+  heaviest keyword may invalidate the #2->#n keywords, so it's actually 
+  #n+1 which is next valid.
+
 
