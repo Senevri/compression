@@ -22,13 +22,15 @@
 
 #ifdef TEST
 /*For testing*/
+int test_scan_words(void);
 int test_encode_dict(void);
 int test_decode_dict(const char * src);
 
 int main(void)
 {
   printf("Testing Dictionary\n");
-  test_encode_dict();
+  //test_encode_dict();
+  test_scan_words();
   return 0;
 }
 #endif
@@ -56,16 +58,12 @@ keyword * find_in_dict(const char * word){
   keyword * current = head;
   int i = 1;
   if (!head->word) {
-//    printf("no dictionary\n");
     return 0;
   }
 	while(current->next){ /* any nonzero == true */
-//    printf("has dictionary: ");
 		if (0==strcmp(current->word, word)) { /* strcmp returns difference between szStrings*/
-//      printf("found word\n");
 			return current; /* just in case, return 1-based index of location */
 		}
-//    printf("no word\n");
     if(0!=current->next) {
       current = current->next;
 	  	i++;
@@ -73,7 +71,6 @@ keyword * find_in_dict(const char * word){
       return 0;
     }
 	}
-//  printf("return");
 	return 0;
 }
 
@@ -93,13 +90,14 @@ void insert_keyword(keyword * current, const char * word, const int len) {
   printf(">");
   current->count = 1;
   current->next = new_keyword();     
-  /* sete the word, now get a new word  */
+  /* set the word, now get a new word  */
 }
 
 int scan_words(const char * src, const int len){
   char word[MAX_WORD_LEN+1];
   int w_loc=0;
   int i;
+  int j;
   /*
     Dictionary theory: 
     Every character might be a keyword. scan input, keep on adding characters
@@ -111,47 +109,49 @@ int scan_words(const char * src, const int len){
 	keyword * dict_word = 0;
 
   for(i=0;i<len;i++){
-    word[w_loc]=src[i]; 
-    word[(w_loc+1)]='\0'; /* must null-terminate string */
-//    if (w_loc>1) {
+    for(j=i;j<len;j++){
+      word[w_loc]=src[j]; 
+      word[(w_loc+1)]='\0'; /* must null-terminate string */
+      //    if (w_loc>1) {
       dict_word = find_in_dict(word);
       if(!dict_word){/* only do this if the word doesn't already exist */
         insert_keyword(current, word, w_loc+1);
         current = current->next;
       } else {
         dict_word->count++;
-        printf("#word: %s, count: %d\n", dict_word->word, dict_word->count);
       }
       w_loc++;
       if(w_loc==MAX_WORD_LEN){
         w_loc=0;
-        //strcpy (word, "");
+      
       }
-//    } else {
-//      w_loc++;
-//    }
+    }
   }
   return 0;
 }
 
-/** not needed anymore --- oh yes it is´. bah. */ 
+void remove_word(keyword * current){
+//TODO: bidirectional linked list...
+}
+
+/** not needed anymore --- oh yes it is. bah. */ 
 int count_words(const char * src, const int len){
   keyword * current = head;
   int i = 0;
   char * word = 0;
   printf("counting words. \n Sauce: %s\nLength: %d\n", src, len);
-  while(0!=current->next) {
+  while(current->next) {
+    /* remove unused dict words*/
+    if(current->lenght=1){
+      remove_word(current);
+    }
     current->count = 0;
 //    printf("comparing [%s(%d)]", current->word, current->length);
-    for (i=0; i!=len; i++) {
+    for (i=0; i!=(1+len-current->length); i++) {
       word = malloc((current->length)*sizeof(char));
       strncpy(word, (src+i), current->length);
-      //memcpy(word, (src+i), current->length);
-      //word[current->length] = '\0';
-      //strcpy(word, current->word);
-//      printf("[%s : %s = %d ]", word, current->word, strncmp(word, current->word, current->length));
+      printf("[%s : %s = %d ]\n", word, current->word, strncmp(word, current->word, current->length));
       if(0 == strncmp(word, current->word, current->length)){
-//	printf("++");
       	current->count++;
       }
       free(word); 
@@ -223,12 +223,12 @@ int encode_dict(char * dest, char * src, int len)
   keyword * current = head;
   char * map = malloc(1+len*sizeof(char));
   int i = 0;
-  int j=0;
+  int j = 0;
   int keywords_removed = 0;
 //  printf("len: %d\n", len);
   scan_words(src, len);
 //  printf("len: %d\n", len);
-  count_words(src, len);
+//  count_words(src, len);
   /* now we have a linked list of potential words;
 	 * we also counted the times they appear in the source.
    */
@@ -257,7 +257,7 @@ int encode_dict(char * dest, char * src, int len)
 			if(i>=len){
         running=0;
 			}
-      printf("!");
+      //printf("!");
 		}
 		if (i>0) {
 			//printf("map jump done: %d characters\n", i);
@@ -334,21 +334,15 @@ bool quickSort() {
     return YES; }
 */
 
-
-int test_encode_dict(void){
-  char src[]="talo talon talona taloa taloksi talossa talosta taloon talolla talolta talolle talotta taloineen taloin";
-  char * dest = malloc(1000*sizeof(char));
+void dump_dict(void){
   char * formatted = malloc(MAX_WORD_LEN+2*sizeof(char));
-//  memset(formatted, " ", MAX_WORD_LEN);
-//  memset(formatted+13, "\0", MAX_WORD_LEN -13);
   strcpy(formatted, "           ");
 
 
 //  printf("sizeof: %d\n", sizeof(src));
-  encode_dict(dest, src, sizeof(src) );
  /*let's not leak*/
   keyword * current = head;
-  if (current == 0) return 0;
+  if (current == 0) return;
   keyword * tmp = 0;
   while (current->next!=0){
     int cpy_len = 0;
@@ -368,6 +362,22 @@ int test_encode_dict(void){
     current = current->next;
     free(tmp);
   }
+}
+int test_scan_words(void){
+  char src[]="talo talon talona taloa taloksi talossa talosta taloon talolla talolta talolle talotta taloineen taloin";
+  scan_words(src, sizeof(src));
+  dump_dict();
+  count_words(src, sizeof(src));
+  return 0;
+}
+
+int test_encode_dict(void){
+  char src[]="talo talon talona taloa taloksi talossa talosta taloon talolla talolta talolle talotta taloineen taloin";
+  char * dest = malloc(1000*sizeof(char));
+//  memset(formatted, " ", MAX_WORD_LEN);
+//  memset(formatted+13, "\0", MAX_WORD_LEN -13);
+  encode_dict(dest, src, sizeof(src) );
+  dump_dict();
   printf("%s\n" , dest);
 //  test_decode_dict(dest);
   free(dest);

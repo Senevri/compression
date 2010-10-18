@@ -1,9 +1,9 @@
-CC:=gcc
+CC=gcc
 
-CARGS:=-g -Wall -O2
-LIBS:=
+CARGS=-g -Wall -O2
+#LIBS:=
 
-TARGETS:=test
+TARGETS=test
 
 all: test
 
