@@ -40,7 +40,7 @@ int main(void)
 }
 #endif
 
-static keyword* head;
+static keyword* key_head;
 static int dict_size;
 
 int decode_dict(char * dest, char * src, int len)
@@ -50,7 +50,7 @@ int decode_dict(char * dest, char * src, int len)
 
 const char * get_word(int index){
   int i=0;
-  keyword * current = head;
+  keyword * current = key_head;
   index = index-1;
   while(current->next){
     if(i == index){
@@ -61,9 +61,9 @@ const char * get_word(int index){
 }
 
 keyword * find_in_dict(const char * word){
-  keyword * current = head;
+  keyword * current = key_head;
   int i = 1;
-  if (!head || !head->word) {
+  if (!key_head || !key_head->word) {
     return 0;
   }
 	while(current->next){ /* any nonzero == true */
@@ -111,8 +111,8 @@ int scan_words(const char * src, const int len){
     Every character might be a keyword. scan input, keep on adding characters
     to the dictionary. As you progress, prune instaces which do not appear outside longer keywords.
    */
-  head = new_keyword(0);
-  keyword * current = head;
+  key_head = new_keyword(0);
+  keyword * current = key_head;
 	keyword * dict_word = 0;
   for(i=0;i<len;i++){
     for(j=i;j<len;j++){
@@ -148,20 +148,31 @@ keyword * remove_keyword(keyword * current){
   } else if (next) { /* first element */
     prev = current->next; 
     prev->prev = 0;
-    head = prev; /*let's not break the dict, mmkay?*/
+    key_head = prev; /*let's not break the dict, mmkay?*/
   } else { /*removed only element*/
     prev = 0;    
-    head = prev;
+    key_head = prev;
   }
     dict_size--;
     free(current);
     return prev; /* actually next, regardless now first element */
 }
 
+  /*remov unused keywords*/
+void remove_unused_keys (void){
+  keyword * current = key_head;
+  while(current) {
+    if(current->count==0 || current->length==0) {
+      current = remove_keyword(current);
+    } else {
+      current = current->next;
+    }
+  }
+}
 
 /** count instances of keywords in strings - do not allow overlap */ 
 int count_words(const char * src, const int len){
-  keyword * current = head;
+  keyword * current = key_head;
   int i = 0;
   char * word = 0;
   printf("counting words. \n Sauce: %s\nLength: %d\n", src, len);
@@ -189,16 +200,7 @@ int count_words(const char * src, const int len){
     }
     current = current->next;  
   }
-  /*remov unused keywords*/
-  current = head;
-  while(current) {
-    if(current->count==0 || current->length==0) {
-      current = remove_keyword(current);
-    } else {
-      current = current->next;
-    }
-  }
-
+  remove_unused_keys();
   return 0;
 }
 /*adjacent ordered swap*/
@@ -211,7 +213,7 @@ void swap(keyword * current, keyword *next){
     prev->next = next;
     next->prev = prev;
   } else {
-    head = next;
+    key_head = next;
     next->prev = 0;
   }
   current->prev = next;
@@ -277,7 +279,7 @@ int slow_sort(){
    * ASSUMPTION : longest code rep = x. Thus, compression ratio = (x/word->length)
    * Dictionary size is increased by word->length
    * */
-  keyword * current = head;
+  keyword * current = key_head;
   keyword * next = current->next;
   int swaps = 0;
   int w_c =0; int w_n=0;
@@ -304,7 +306,7 @@ int slow_sort(){
         //printf("post:[%s<>%s]\n", current->word, next->word);
         //printf("nn%d|c%d|nnn%d|nn%d|c%d\n",current->prev, current, current->next, next, next->next);
         swaps++;
-        current = head;
+        current = key_head;
         //current = current->next;
       } else { 
         current = current->next;
@@ -331,7 +333,7 @@ int slow_sort(){
 /* should probably return a pointer to the dictionary, too. */
 int encode_dict(char * dest, char * src, int len)
 {
-  keyword * current = head;
+  keyword * current = key_head;
   char * map = malloc(1+len*sizeof(char));
   int i = 0;
 //  int j = 0;
@@ -358,7 +360,7 @@ int encode_dict(char * dest, char * src, int len)
 	 *
 	 * */
 
-  current = head;
+  current = key_head;
   memset(map, '-', len*sizeof(char));
     memset(map+len, '\0', sizeof(char));
   while(current->next){
@@ -419,6 +421,7 @@ int encode_dict(char * dest, char * src, int len)
   memset(dest+len, '\0', sizeof(char));
   printf("dest: %s\n", dest);
   printf("\n");
+  remove_unused_keys();
   return 0;
   }
 
@@ -454,7 +457,7 @@ void dump_dict(void){
   memset(formatted, ' ', FORMATTED_LEN);
   memset(formatted+FORMATTED_LEN, '\0', sizeof(char));
 
-  keyword * current = head;
+  keyword * current = key_head;
   if (current == 0) return;
   printf("\n");
   while (current){
@@ -471,7 +474,7 @@ void dump_dict(void){
     memset(formatted, ' ', FORMATTED_LEN);
     memset(formatted+FORMATTED_LEN, '\0', sizeof(char));
     if(current->next == 0 && (i+1)<dict_size){
-      printf("\nERROR:%d|%d|%d|%s\n", current->prev, current, current->next, current->word);
+      printf("\nERROR:%d|%d|%d|%s\n", (int)current->prev, (int)current, (int)current->next, current->word);
     }
     current = current->next;
 
@@ -479,8 +482,8 @@ void dump_dict(void){
   printf("\ndictionary size: %d", dict_size);
 }
 int test_keywords(void){
-  head = new_keyword(0);
-  keyword * current = head;
+  key_head = new_keyword(0);
+  keyword * current = key_head;
   insert_keyword(current, "talo", 4);
   current=current->next;
   insert_keyword(current, "koti", 4);
@@ -515,7 +518,7 @@ int test_keywords(void){
 
 int test_swap(void){
   test_keywords();
-  //keyword * current = head;
+  //keyword * current = key_head;
   keyword * current = find_in_dict("tupa6");
   keyword * next = current->next;
   //keyword * next = find_in_dict("tupa6");
@@ -565,7 +568,7 @@ int test_decode_dict(const char * src){
   int i=0;
   int index = 0;
   int j=0;
-  int key = 0;
+  //int key = 0;
   /* stoopid ! */
   while(!memcmp("\0", src+i, sizeof(char))){
     if (memcmp("#", src+i, sizeof(char))){

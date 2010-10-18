@@ -1,3 +1,4 @@
+/* ex: set tabstop=2 expandtab softtabstop=2 shiftwidth=2:  */
 #ifndef DICTIONARY_H
 #define DICTIONARY_H
 #include <stdio.h>
@@ -20,5 +21,15 @@ typedef struct {
   void * prev; /* pointer to the previous keyword */
   void * next; /* pointer to the next keyword */
 } keyword;
+
+
+/* struct for textblobs */
+typedef struct {
+  keyword * keyword;
+  int huffbits; /*the huffman code*/
+  char hufflen; /*how many bits are relevant in the code*/
+  void * left; /*left child blob*/
+  void * right; /* right child blob */
+} blob;
 
 #endif
