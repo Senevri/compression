@@ -33,14 +33,15 @@ int main(void)
 {
   printf("Testing Dictionary\n");
   //test_swap();
-  test_encode_dict();
-  //test_scan_words();
+  //test_encode_dict();
+  test_scan_words();
   //test_keywords();
   return 0;
 }
 #endif
 
 static keyword* key_head;
+static keyword* key_tail;
 static int dict_size;
 
 int decode_dict(char * dest, char * src, int len)
@@ -98,6 +99,7 @@ void insert_keyword(keyword * current, const char * word, const int len) {
   current->length=len;
   current->count = 1;
   current->next = new_keyword(current);     
+  key_tail = current;
   /* set the word, now get a new word  */
 }
 
@@ -253,39 +255,39 @@ void swap_u(keyword * a, keyword *b){
   if(0==a||0==b) return;
   temp->prev = a->prev;
   temp->next = a->next;
+  
+
   //printf("+");
   if (b==a->next) {
     a->next = b->next;
     a->prev = b;
-    b->next = temp->next;
+    a->next->prev = a;
+    b->next = a;
     b->prev = temp->prev;
+    if(b->prev) b->prev->next = b; else key_head=b;
   } else if (a==b->next){
-    a->prev = b->prev;
+     a->prev = b->prev;
     a->next = b;
+    if(a->prev) a->prev->next = a; else key_head=a;
     b->next = temp->next;
     b->prev = a;
+    b->next->prev=b;
   } else {
     a->prev = b->prev;
+    if (a->prev) a->prev->next = a; else key_head=a;
     a->next = b->next;
+    a->next->prev = a;
     b->prev = temp->prev;
+    if (b->prev) b->prev->next = b; else key_head=b;
     b->next = temp->next;
+    b->next->prev = b;
   }
   free(temp);
 }
 
-int slow_sort(){
-  /* Sort condition: Longest repeatable block
-   * 
-   * ASSUMPTION : longest code rep = x. Thus, compression ratio = (x/word->length)
-   * Dictionary size is increased by word->length
-   * */
-  keyword * current = key_head;
-  keyword * next = current->next;
-  int swaps = 0;
-  int w_c =0; int w_n=0;
-  while(current) {
-    next = current->next;
-    if(next) {
+int swap_condition(keyword* current, keyword *next) {
+      int w_c =0; int w_n=0;
+      /* sort condition start*/
       if (current->count>1 ) { 
         w_c = current->count*current->length; 
       } else {
@@ -300,8 +302,25 @@ int slow_sort(){
         w_c = current->length;
         w_n = next->length;
       }
+      /* sort condition end */
+      return (w_c-w_n);
+}
+
+
+int slow_sort(){
+  /* Sort condition: Longest repeatable block
+   * 
+   * ASSUMPTION : longest code rep = x. Thus, compression ratio = (x/word->length)
+   * Dictionary size is increased by word->length
+   * */
+  keyword * current = key_head;
+  keyword * next = current->next;
+  int swaps = 0;
+  while(current) {
+    next = current->next;
+    if(next) {
       /* if current weight is less than next weight swap */
-      if(w_c < w_n) {
+      if(0>swap_condition(current, next)) {
         swap(current, next); /*current->next may be null*/
         //printf("post:[%s<>%s]\n", current->word, next->word);
         //printf("nn%d|c%d|nnn%d|nn%d|c%d\n",current->prev, current, current->next, next, next->next);
@@ -321,6 +340,61 @@ int slow_sort(){
   printf("slow_sort is done. Swapped %d words\n", swaps);
   return 0;
 }
+
+
+
+int quicksort(keyword *l, keyword *r) {
+
+  int pivot =0;
+  int lcur = 0;
+  int rcur = 0;
+  int swaps = 0;
+  keyword * temp;
+  //pivot = swap_condition(l, r); /*if pivot<0 swap */
+  if(l->count>1) pivot = l->count*l->length; else pivot=1;
+  lcur = pivot;
+  rcur = pivot;
+  printf("pivot: %d\n", pivot);
+  while (l->next != r){
+    while(rcur <= pivot && l->next!=r) { 
+      r = r->prev;
+      if(r->count>1) rcur = r->count*r->length; else rcur=1;
+
+      printf(".1");  
+    }
+    if (rcur>lcur) {
+      swap_u(l, r);
+      temp = l;
+      l = r->next;
+      r = temp->prev;
+      swaps++; 
+    }
+    while (lcur >= pivot && l->next!=r) {
+      l=l->next;
+      printf("%d", l); 
+      if(0!=l){
+      
+        if(l->count>1) lcur = l->count*l->length; else lcur=1;
+        printf(".");
+      } else (lcur = pivot -1);
+    }
+    if (lcur<rcur) {
+       swap_u(l, r);
+      temp = r;
+      if (l->prev) r= l->prev; else r = key_tail;
+      l = temp->next;
+      swaps++;
+    }
+  printf("|");
+  }
+  //if (l->prev && l->prev!=key_head) quicksort(key_head, l->prev);
+  if (r->next && r->next!=key_tail) quicksort(r->next, key_tail);
+  printf("\nSwaps: %d", swaps);
+  return 0;
+}
+
+
+
 
 /**
  * encode_dict
@@ -371,9 +445,9 @@ int encode_dict(char * dest, char * src, int len)
       if(i>=len){
         running=0;
       }
-      printf("!");
     }
     if (i>0) {
+      printf(".");
       //printf("map jump done: %d characters\n", i);
     }
 #ifdef TEST
@@ -427,27 +501,6 @@ int encode_dict(char * dest, char * src, int len)
 
 
 #ifdef TEST
-/*
-   bool quickSort() {
-
-#define  MAX_LEVELS  1000
-
-
-int  piv, beg[MAX_LEVELS], end[MAX_LEVELS], i=0, L, R ;
-
-beg[0]=0; end[0]=elements;
-while (i>=0) {
-L=beg[i]; R=end[i]-1;
-if (L<R) {
-piv=arr[L]; if (i==MAX_LEVELS-1) return NO;
-while (L<R) {
-while (arr[R]>=piv && L<R) R--; if (L<R) arr[L++]=arr[R];
-while (arr[L]<=piv && L<R) L++; if (L<R) arr[R--]=arr[L]; }
-arr[L]=piv; beg[i+1]=L+1; end[i+1]=end[i]; end[i++]=L; }
-else {
-i--; }}
-return YES; }
-*/
 
 #define FORMATTED_LEN 24
 void dump_dict(void){ 
@@ -475,6 +528,7 @@ void dump_dict(void){
     memset(formatted+FORMATTED_LEN, '\0', sizeof(char));
     if(current->next == 0 && (i+1)<dict_size){
       printf("\nERROR:%d|%d|%d|%s\n", (int)current->prev, (int)current, (int)current->next, current->word);
+      break;
     }
     current = current->next;
 
@@ -519,19 +573,21 @@ int test_keywords(void){
 int test_swap(void){
   test_keywords();
   //keyword * current = key_head;
-  keyword * current = find_in_dict("tupa6");
-  keyword * next = current->next;
+  keyword * current = find_in_dict("bar");
+  keyword * next = find_in_dict("talo"); 
   //keyword * next = find_in_dict("tupa6");
   printf("\nstart test");
-  //swap(current, next);
+  swap_u(current, next);
+  /*
   while(next){
     next = current->next;
     if (next && next->length>0) {
-      swap(current, next);
+      swap_u(next, current);
     } else {
       next = 0;
     }
   }
+  */
   dump_dict();
   return 0;
 }
@@ -544,7 +600,8 @@ int test_scan_words(void){
   scan_words(src, sizeof(src));
   count_words(src, sizeof(src));
   printf("\nwords counted.\n");
-  slow_sort();
+  //slow_sort();
+  quicksort(key_head, key_tail);
   printf("sorted\n");
   dump_dict();
   return 0;

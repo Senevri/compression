@@ -13,14 +13,15 @@ int dict_decode(char * dest, char * src, int len);
 void compress_dict(FILE *infile, FILE *outfile);
 void extract_dict(FILE *infile, FILE *outfile);
 
+typedef struct keyword keyword;
 /* Dictionary structs */
-typedef struct {
+struct keyword{
   int count; /* count of how many instances of this word was found */
   int length; /* lenght of word */
   char * word;  /* word data */
-  void * prev; /* pointer to the previous keyword */
-  void * next; /* pointer to the next keyword */
-} keyword;
+  keyword * prev; /* pointer to the previous keyword */
+  keyword * next; /* pointer to the next keyword */
+}; 
 
 
 /* struct for textblobs */
