@@ -33,8 +33,8 @@ int main(void)
 {
   printf("Testing Dictionary\n");
   //test_swap();
-  //test_encode_dict();
-  test_scan_words();
+  test_encode_dict();
+  //test_scan_words();
   //test_keywords();
   return 0;
 }
@@ -49,14 +49,16 @@ int decode_dict(char * dest, char * src, int len)
   return 0;
 }
 
+
 const char * get_word(int index){
   int i=0;
   keyword * current = key_head;
-  index = index-1;
   while(current->next){
     if(i == index){
-      return current->word;
+      return current->word; 
     }
+    current = current->next;
+    i++;
   }
   return 0;
 }
@@ -71,7 +73,7 @@ keyword * find_in_dict(const char * word){
 		if (0==strcmp(current->word, word)) { /* strcmp returns difference between szStrings*/
 			return current; /* just in case, return 1-based index of location -- isn't this the pointer, though? */
 		}
-    if(0!=current->next) {
+    if(current->next) {
       current = current->next;
 	  	i++;
     } else {
@@ -360,7 +362,7 @@ int quicksort(keyword *l, keyword *r) {
       r = r->prev;
       if(r->count>1) rcur = r->count*r->length; else rcur=1;
 
-      printf(".1");  
+      //printf(".1");  
     }
     if (rcur>lcur) {
       swap_u(l, r);
@@ -371,11 +373,11 @@ int quicksort(keyword *l, keyword *r) {
     }
     while (lcur >= pivot && l->next!=r) {
       l=l->next;
-      printf("%d", l); 
+      //printf("%s", l); 
       if(0!=l){
       
         if(l->count>1) lcur = l->count*l->length; else lcur=1;
-        printf(".");
+        //printf(".");
       } else (lcur = pivot -1);
     }
     if (lcur<rcur) {
@@ -385,7 +387,7 @@ int quicksort(keyword *l, keyword *r) {
       l = temp->next;
       swaps++;
     }
-  printf("|");
+  //printf("|");
   }
   //if (l->prev && l->prev!=key_head) quicksort(key_head, l->prev);
   if (r->next && r->next!=key_tail) quicksort(r->next, key_tail);
@@ -447,7 +449,7 @@ int encode_dict(char * dest, char * src, int len)
       }
     }
     if (i>0) {
-      printf(".");
+      //printf(".");
       //printf("map jump done: %d characters\n", i);
     }
 #ifdef TEST
@@ -502,7 +504,8 @@ int encode_dict(char * dest, char * src, int len)
 
 #ifdef TEST
 
-#define FORMATTED_LEN 24
+enum { FORMATTED_LEN = 24 };
+
 void dump_dict(void){ 
   char * formatted = malloc(MAX_WORD_LEN+2*sizeof(char));
   int i = 0;
@@ -600,8 +603,8 @@ int test_scan_words(void){
   scan_words(src, sizeof(src));
   count_words(src, sizeof(src));
   printf("\nwords counted.\n");
-  //slow_sort();
-  quicksort(key_head, key_tail);
+  slow_sort();
+  //quicksort(key_head, key_tail);
   printf("sorted\n");
   dump_dict();
   return 0;
@@ -612,7 +615,7 @@ int test_encode_dict(void){
   char * dest = malloc(1000*sizeof(char));
   encode_dict(dest, src, sizeof(src) );
   dump_dict();
-  printf("%s\n" , dest);
+  //printf("%s\n" , dest);
 //  test_decode_dict(dest);
   free(dest);
   return 0;
