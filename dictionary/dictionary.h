@@ -33,4 +33,22 @@ typedef struct {
   void * right; /* right child blob */
 } blob;
 
+#ifdef TEST /* these go out only for testing purposes */
+
+static keyword* key_head;
+static keyword* key_tail;
+static int dict_size;
+int scan_words(const char * src, const int len);
+int count_words(const char * src, const int len);
+keyword * new_keyword(keyword * current);
+void insert_keyword(keyword * current, const char * word, const int len);
+keyword * find_in_dict(const char * word);
+keyword * remove_keyword(keyword * current);
+void swap_u(keyword * a, keyword *b);
+int slow_sort();
+int encode_dict(char * dest, char * src, int len);
+int decode_dict(char * dest, char * src, int len);
+#endif
+
+
 #endif
