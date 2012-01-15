@@ -145,7 +145,7 @@ keyword * remove_keyword(keyword * current){
     return prev; /* actually next, regardless now first element */
 }
 
-  /*remov unused keywords*/
+/*remove unused keywords*/
 void remove_unused_keys (void){
   keyword * current = key_head;
   while(current) {

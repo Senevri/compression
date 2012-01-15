@@ -1,0 +1,4 @@
+SOURCES += dat.c
+HEADERS +=
+TARGET = dat.exe
+
