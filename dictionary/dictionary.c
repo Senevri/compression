@@ -210,7 +210,7 @@ void swap(keyword * current, keyword *next){
 }
 
 /*adjacent ordered data swap*/
- 
+
 void swap_d(keyword * current, keyword *next){
   /*data to swap: count, length, word*/
   int tmplen, tmpc;
@@ -240,7 +240,7 @@ void swap_u(keyword * a, keyword *b){
   if(0==a||0==b) return;
   temp->prev = a->prev;
   temp->next = a->next;
-  
+
 
   //printf("+");
   if (b==a->next) {

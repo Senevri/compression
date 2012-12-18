@@ -17,7 +17,7 @@ int main(void)
   printf("Testing Dictionary\n");
   //test_swap();
   test_encode_dict();
-  //test_scan_words();
+  test_scan_words();
   //test_keywords();
   return 0;
 }

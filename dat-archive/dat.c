@@ -43,9 +43,10 @@
 
 
 struct datablock{
-	char filename[255];
+	char filename[256];
 	unsigned long bytes;
   unsigned char * data;
+  struct datablock * next;
 };
 
 /* get file size  --- from snippet */ 
@@ -60,7 +61,7 @@ int filesize(char * filename) {
     //file_size = filelength(fp);
     if (fstat(fp, &buf) < 0 ) printf( "fstat error\n");
     file_size = buf.st_size;
-    printf("The file size in bytes is %ld\n", file_size);
+    printf("The file %s size in bytes is %ld\n", filename, file_size);
     close(fp);
   } 
   return file_size;
@@ -85,13 +86,30 @@ struct datablock * create_block(char * filename) {
     strcpy(h->filename, filename);
     h->bytes=filesize(filename);
     h->data = fileread(filename, h->bytes);
-	return h;	
-} 
+    h->next = NULL;
+	return h;
+}
 
 
 /* append by default */
 int write_to_file(char * filename, struct datablock * hd, void * data){
   return -1;
+}
+
+/* append by default */
+int write_datablocks_to_file(char * filename, struct datablock * hd){
+  FILE * file;
+  file=fopen(filename, "wb");
+  struct datablock * h = hd;
+  while(h != NULL) {
+    printf("writing %s...\n", h->filename);
+    fwrite(h->filename, sizeof(char), 255, file); 
+    fwrite(&h->bytes, sizeof(unsigned long), 1, file); 
+    fwrite(h->data, sizeof(unsigned char), h->bytes, file); 
+    h = h->next;
+  }
+  fclose(file);
+  return 0;
 }
 
 /* extract */
@@ -100,8 +118,9 @@ int extract_file(char * filename){
 }
 
 int main (int argc, char* argv[]) {
-  struct datablock *h;
-	if (argc>1) {
+  struct datablock *head;
+  struct datablock *h = NULL;
+	if (argc>2) {
     if (argv[1][1] == 0 && argc>2) { /* single-char command */
       if (argv[1][0] == 'x') {
         extract_file(argv[2]);
@@ -109,17 +128,30 @@ int main (int argc, char* argv[]) {
       }
     }
 		//should we assume outfile infiles? sure, why not...
-    h = create_block(argv[1]);
-    /* works...*/
-    if (argc==3) {
-      FILE * file;
-      file=fopen(argv[2], "wb");
-      fwrite(h->filename, sizeof(char), 255, file);
-      fwrite(&h->bytes, sizeof(unsigned long), 1, file);
-      fwrite(h->data, sizeof(unsigned char), h->bytes, file);
-      fclose(file);
+    head = h;
+    int i;
+    for (i=2; i<argc; i++) {
+      if (NULL == h) {
+        h = create_block(argv[i]);
+        if (NULL == head) {
+          head = h;
+        }
+      } else {
+        h->next = create_block(argv[i]);
+        h = h->next;
+      }
     }
-    free(h->data);
+    /* works...*/
+    if (argc>=3) {
+      write_datablocks_to_file(argv[1], head);
+    }
+    
+    //cleanup
+    h = head;
+    while(h != NULL) {
+      free(h->data);
+      h = h->next;
+    }
     free(h);
     return 0;
 	} else {
