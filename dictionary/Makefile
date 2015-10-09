@@ -7,7 +7,7 @@ TARGETS=test
 
 all: test
 
-test: dictionary.c
+test: test.c dictionary.c
 	$(CC) $(CARGS) -DTEST -o $@ $? $(LIBS)
 
 clean: 

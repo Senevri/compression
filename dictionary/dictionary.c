@@ -21,42 +21,27 @@
  */
 
 
-#ifdef TEST
-/*For testing*/
-int test_swap(void);
-int test_keywords(void);
-int test_scan_words(void);
-int test_encode_dict(void);
-int test_decode_dict(const char * src);
-
-int main(void)
-{
-  printf("Testing Dictionary\n");
-  //test_swap();
-  //test_encode_dict();
-  test_scan_words();
-  //test_keywords();
-  return 0;
-}
-#endif
-
+#ifndef TEST
 static keyword* key_head;
 static keyword* key_tail;
 static int dict_size;
+#endif
 
 int decode_dict(char * dest, char * src, int len)
 {
   return 0;
 }
 
+
 const char * get_word(int index){
   int i=0;
   keyword * current = key_head;
-  index = index-1;
   while(current->next){
     if(i == index){
-      return current->word;
+      return current->word; 
     }
+    current = current->next;
+    i++;
   }
   return 0;
 }
@@ -71,7 +56,7 @@ keyword * find_in_dict(const char * word){
 		if (0==strcmp(current->word, word)) { /* strcmp returns difference between szStrings*/
 			return current; /* just in case, return 1-based index of location -- isn't this the pointer, though? */
 		}
-    if(0!=current->next) {
+    if(current->next) {
       current = current->next;
 	  	i++;
     } else {
@@ -160,7 +145,7 @@ keyword * remove_keyword(keyword * current){
     return prev; /* actually next, regardless now first element */
 }
 
-  /*remov unused keywords*/
+/*remove unused keywords*/
 void remove_unused_keys (void){
   keyword * current = key_head;
   while(current) {
@@ -225,7 +210,7 @@ void swap(keyword * current, keyword *next){
 }
 
 /*adjacent ordered data swap*/
- 
+
 void swap_d(keyword * current, keyword *next){
   /*data to swap: count, length, word*/
   int tmplen, tmpc;
@@ -255,7 +240,7 @@ void swap_u(keyword * a, keyword *b){
   if(0==a||0==b) return;
   temp->prev = a->prev;
   temp->next = a->next;
-  
+
 
   //printf("+");
   if (b==a->next) {
@@ -360,7 +345,7 @@ int quicksort(keyword *l, keyword *r) {
       r = r->prev;
       if(r->count>1) rcur = r->count*r->length; else rcur=1;
 
-      printf(".1");  
+      //printf(".1");  
     }
     if (rcur>lcur) {
       swap_u(l, r);
@@ -375,7 +360,7 @@ int quicksort(keyword *l, keyword *r) {
       if(0!=l){
       
         if(l->count>1) lcur = l->count*l->length; else lcur=1;
-        printf(".");
+        //printf(".");
       } else (lcur = pivot -1);
     }
     if (lcur<rcur) {
@@ -385,7 +370,7 @@ int quicksort(keyword *l, keyword *r) {
       l = temp->next;
       swaps++;
     }
-  printf("|");
+  //printf("|");
   }
   //if (l->prev && l->prev!=key_head) quicksort(key_head, l->prev);
   if (r->next && r->next!=key_tail) quicksort(r->next, key_tail);
@@ -405,8 +390,7 @@ int quicksort(keyword *l, keyword *r) {
  * 
  */
 /* should probably return a pointer to the dictionary, too. */
-int encode_dict(char * dest, char * src, int len)
-{
+int encode_dict(char * dest, char * src, int len) {
   keyword * current = key_head;
   char * map = malloc(1+len*sizeof(char));
   int i = 0;
@@ -447,7 +431,7 @@ int encode_dict(char * dest, char * src, int len)
       }
     }
     if (i>0) {
-      printf(".");
+      //printf(".");
       //printf("map jump done: %d characters\n", i);
     }
 #ifdef TEST
@@ -640,3 +624,4 @@ int test_decode_dict(const char * src){
   return 0;
 }
 #endif
+
