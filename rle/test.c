@@ -18,13 +18,13 @@ char debug_buffer[2000]="";
 
 void debug_print(const char * src) {
   if(debugflag) {
-    printf(src);
+    printf("%s", src);
   }
 }
 
 int test(int status){
   if(status){
-    printf("\t[OK]\n", status);
+    printf("\t[OK]: status %d\n", status);
   } else {
     printf("\t[FAIL]: status %d\n", status);
   }
@@ -69,7 +69,7 @@ void test4(){
   unsigned char buf[1024];
   unsigned char buf2[1024];
   int t_l, c_l;
-  printf("\ncompressed %d bytes, ", sizeof(str));
+  printf("\ncompressed %lu bytes, ", sizeof(str));
   t_l=rle_encode(buf, str, sizeof(str));
 
   printf("compressed size: %d\nvalue: %s\n", 
@@ -91,7 +91,7 @@ void test2(){
   unsigned char buf2[256];
   int t_l, c_l;
   t_l=rle_encode(buf, str, sizeof(str));
-  printf("\ncompressed %d bytes, compressed size: %d\n", sizeof(str), t_l);
+  printf("\ncompressed %lu bytes, compressed size: %d\n", sizeof(str), t_l);
   c_l=t_l;
   t_l=rle_decode(buf2, buf, c_l);
   printf("string was: %s\ndecoded to: %s\n", str, buf2);
@@ -109,7 +109,7 @@ void test3(){
   unsigned char buf2[256];
   int t_l, c_l;
   t_l=rle_encode(buf, str, sizeof(str));
-  printf("\ncompressed %d bytes, compressed size: %d\n", sizeof(str), t_l);
+  printf("\ncompressed %lu bytes, compressed size: %d\n", sizeof(str), t_l);
   c_l=t_l;
   t_l=rle_decode(buf2, buf, c_l);
   printf("string was: %s\ndecoded to: %s\n", str, buf2);
@@ -127,7 +127,7 @@ void test1(){
   unsigned char teststring[33] = "aaaaabbbbbbcccccccdddddddeeeeeee";
   int testbuffer_lenght;
   int compressed_lenght;
-  printf("compressing %d bytes\n", sizeof(teststring));
+  printf("compressing %lu bytes\n", sizeof(teststring));
   testbuffer_lenght=rle_encode(testbuffer, teststring, sizeof(teststring));
   printf("%s compressed to\n%s, lenght:%d\n", teststring, testbuffer, 
 	 testbuffer_lenght);
@@ -146,7 +146,7 @@ void ectest4(){
   unsigned char buf[1024];
   unsigned char buf2[1024];
   int t_l, c_l;
-  printf("\ncompressed %d bytes, ", sizeof(str));
+  printf("\ncompressed %lu bytes, ", sizeof(str));
   t_l=rle_encode_ec(buf, str, sizeof(str));
 
   printf("compressed size: %d\nvalue: %s\n", 
@@ -164,7 +164,7 @@ void ectest2(){
   unsigned char buf2[256];
   int t_l, c_l;
   t_l=rle_encode_ec(buf, str, sizeof(str));
-  printf("\ncompressed %d bytes, compressed size: %d\n", sizeof(str), t_l);
+  printf("\ncompressed %d bytes, compressed size: %d\n", (int)sizeof(str), (int)t_l);
   c_l=t_l;
   t_l=rle_decode_ec(buf2, buf, c_l);
   printf("string was: %s\ndecoded to: %s\n", str, buf2);
@@ -178,7 +178,7 @@ void ectest3(){
   unsigned char buf2[256];
   int t_l, c_l;
   t_l=rle_encode_ec(buf, str, sizeof(str));
-  printf("\ncompressed %d bytes, compressed size: %d\n", sizeof(str), t_l);
+  printf("\ncompressed %d bytes, compressed size: %d\n", (int)sizeof(str), (int)t_l);
   c_l=t_l;
   t_l=rle_decode_ec(buf2, buf, c_l);
   printf("string was: %s\ndecoded to: %s\n", str, buf2);
@@ -192,7 +192,7 @@ void ectest1(){
   unsigned char compressedstring[33] = "";
   int testbuffer_lenght;
   int compressed_lenght;
-  sprintf(debug_buffer, "compressing %d bytes\n", sizeof(teststring));
+  sprintf(debug_buffer, "compressing %lu bytes\n", sizeof(teststring));
   debug_print(debug_buffer);
   testbuffer_lenght=rle_encode_ec(testbuffer, teststring, sizeof(teststring));
   sprintf(debug_buffer, "%s compressed to\n%s, lenght:%d\n", teststring, testbuffer, 

@@ -371,7 +371,7 @@ int quicksort(keyword *l, keyword *r) {
     }
     while (lcur >= pivot && l->next!=r) {
       l=l->next;
-      printf("%d", l); 
+      printf("%p", l); 
       if(0!=l){
       
         if(l->count>1) lcur = l->count*l->length; else lcur=1;
@@ -544,7 +544,7 @@ int test_keywords(void){
   current=current->next;
   insert_keyword(current, "tupa", 4);
   current=current->next;
-  insert_keyword(current, "mökki", 5);
+  insert_keyword(current, "mï¿½kki", 5);
   current=current->next;
   insert_keyword(current, "foo", 3);
   current=current->next;
